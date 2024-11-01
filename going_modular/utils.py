@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from pathlib import Path
 from torchvision import transforms, datasets
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 from PIL import Image
 
 import torch
