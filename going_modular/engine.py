@@ -49,7 +49,7 @@ def train_step(model: torch.nn.Module,
     pred = torch.softmax(train_logit, dim=1).argmax(dim=1)
 
     # loss calculation
-    loss = loss_fn(train_logit, y)
+    loss = loss_fn(train_logit, y.type(torch.float))
 
     # zero grad
     optimizer.zero_grad()
@@ -106,7 +106,7 @@ def test_step(model: torch.nn.Module,
             test_pred_logits = model(X)
 
             # 2. Calculate and accumulate loss
-            loss = loss_fn(test_pred_logits, y)
+            loss = loss_fn(test_pred_logits, y.type(torch.float))
             test_loss += loss.item()
 
             # Calculate and accumulate accuracy
