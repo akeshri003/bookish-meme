@@ -68,53 +68,55 @@ def train_step(model: torch.nn.Module,
 
   return train_loss, train_acc
 
-def test_step(model: torch.nn.Module,
-              dataloader: torch.utils.data.DataLoader,
-              loss_fn:torch.nn.Module,
-              device:torch.device)->Tuple[float, float]:
-  """Tests a PyTorch model for a single epoch.
+def test_step(model: torch.nn.Module, 
+              dataloader: torch.utils.data.DataLoader, 
+              loss_fn: torch.nn.Module,
+              device: torch.device) -> Tuple[float, float]:
+    """Tests a PyTorch model for a single epoch.
 
-  Turns a target PyTorch model to "eval" mode and then performs
-  a forward pass on a testing dataset.
+    Turns a target PyTorch model to "eval" mode and then performs
+    a forward pass on a testing dataset.
 
-  Args:
-  model: A PyTorch model to be tested.
-  dataloader: A DataLoader instance for the model to be tested on.
-  loss_fn: A PyTorch loss function to calculate loss on the test data.
-  device: A target device to compute on (e.g. "cuda" or "cpu").
+    Args:
+    model: A PyTorch model to be tested.
+    dataloader: A DataLoader instance for the model to be tested on.
+    loss_fn: A PyTorch loss function to calculate loss on the test data.
+    device: A target device to compute on (e.g. "cuda" or "cpu").
 
-  Returns:
-  A tuple of testing loss and testing accuracy metrics.
-  In the form (test_loss, test_accuracy). For example:
+    Returns:
+    A tuple of testing loss and testing accuracy metrics.
+    In the form (test_loss, test_accuracy). For example:
 
-  (0.0223, 0.8985)
-  """
-  # Put the model in test mode
-  model.eval()
+    (0.0223, 0.8985)
+    """
+    # Put model in eval mode
+    model.eval() 
 
-  # setup test loss and test acc
-  test_loss, test_acc = 0, 0
-  with torch.inference_mode():
+    # Setup test loss and test accuracy values
+    test_loss, test_acc = 0, 0
 
-    # loop through each example in the batch
-    for batch, (X, y) in enumerate(dataloader):
-      # Send data to target device
-      X, y = X.to(device), y.to(device)
+    # Turn on inference context manager
+    with torch.inference_mode():
+        # Loop through DataLoader batches
+        for batch, (X, y) in enumerate(dataloader):
+            # Send data to target device
+            X, y = X.to(device), y.to(device)
 
-      # forward pass
-      y_logits = model(X)
-      test_pred = torch.softmax(y_logits, dim=1).argmax(dim=1)
+            # 1. Forward pass
+            test_pred_logits = model(X)
 
-      # loss calculation
-      loss = loss_fn(test_pred, y)
+            # 2. Calculate and accumulate loss
+            loss = loss_fn(test_pred_logits, y)
+            test_loss += loss.item()
 
-      test_loss += loss.item()
-      test_acc += (y==test_pred).sum().item()/len(y)
+            # Calculate and accumulate accuracy
+            test_pred_labels = test_pred_logits.argmax(dim=1)
+            test_acc += ((test_pred_labels == y).sum().item()/len(test_pred_labels))
 
-    test_loss /= len(dataloader)
-    test_acc /= len(dataloader)
-
-  return test_loss, test_acc
+    # Adjust metrics to get average loss and accuracy per batch 
+    test_loss = test_loss / len(dataloader)
+    test_acc = test_acc / len(dataloader)
+    return test_loss, test_acc
 
 from tqdm.auto import tqdm
 from typing import Dict, List
